@@ -227,7 +227,7 @@ function CreateAdmin() {
                     fullWidth
                   />
                 ) : (
-                  <Typography variant="h6" sx={{ fontWeight: 'bold' }}>
+                  <Typography variant="h6">
                     {item.value}
                   </Typography>
                 )}
