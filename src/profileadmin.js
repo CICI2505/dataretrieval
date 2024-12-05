@@ -131,7 +131,7 @@ function CreateAdmin() {
                 </ListItemIcon>
                 <ListItemText primary="Create" />
               </ListItem>
-              <ListItem button sx={{ pl: 4 }} component={Link} to="/historyadmin">
+              <ListItem button sx={{ pl: 4 }} component={Link} to="/history">
                 <ListItemIcon>
                   <History />
                 </ListItemIcon>
