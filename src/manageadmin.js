@@ -213,6 +213,10 @@ function ManageAdmin() {
           >
             <Typography variant="h5" sx={{ mb: 2 }}>ADD USER</Typography>
             <TextField label="NAME" variant="outlined" fullWidth sx={{ mb: 2 }} />
+            <TextField label="NIK" variant="outlined" fullWidth sx={{ mb: 2 }} />
+            <TextField label="BORN DATE" variant="outlined" fullWidth sx={{ mb: 2 }} />
+            <TextField label="DEPARTMENT" variant="outlined" fullWidth sx={{ mb: 2 }} />
+            <TextField label="PHONE" variant="outlined" fullWidth sx={{ mb: 2 }} />
             
             <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 15 }}>
             <Button variant="contained" onClick={handleSearchModalClose}
