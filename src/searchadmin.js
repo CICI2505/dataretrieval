@@ -3,7 +3,7 @@ import { useLocation, useNavigate, Link } from 'react-router-dom';
 import {
   AppBar, Toolbar, Drawer, List, ListItem, ListItemIcon, ListItemText,
   CssBaseline, Box, Typography, Button, Collapse, IconButton, TextField,
-  Modal, RadioGroup, FormControlLabel, Radio, InputLabel
+  Modal
 } from '@mui/material';
 import {
   Dashboard as DashboardIcon, ListAlt, Info, AccountCircle, ExpandLess, ExpandMore, Search, History, Description, FilterList, Add
@@ -18,7 +18,7 @@ function SearchAdmin() {
 
   const [openDataItems, setOpenDataItems] = useState(false);
   const [openAccount, setOpenAccount] = useState(false);
-  const [openSearchModal, setOpenSearchModal] = useState(false); // State untuk modal pencarian
+  const [setOpenSearchModal] = useState(false); // State untuk modal pencarian
   const [openDetailModal, setOpenDetailModal] = useState(false); // State untuk modal detail
   const [selectedItem, setSelectedItem] = useState(null); // State untuk menyimpan item yang dipilih
 
@@ -31,7 +31,7 @@ function SearchAdmin() {
   };
 
   const handleSearchModalOpen = () => setOpenSearchModal(true);
-  const handleSearchModalClose = () => setOpenSearchModal(false);
+  
 
   const handleDetailModalOpen = (item) => {
     setSelectedItem(item); // Set item yang dipilih untuk detail
