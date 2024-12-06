@@ -2,10 +2,11 @@ import React, { useState } from 'react';
 import { useLocation, useNavigate, Link } from 'react-router-dom';
 import {
   AppBar, Toolbar, Drawer, List, ListItem, ListItemIcon, ListItemText,
-  CssBaseline, Box, Typography, Button, Collapse, TextField, IconButton, Modal, RadioGroup, FormControlLabel, Radio, InputLabel
+  CssBaseline, Box, Typography, Button, Collapse, IconButton, TextField,
+  Modal
 } from '@mui/material';
 import {
-  Dashboard as DashboardIcon, ListAlt, Info, AccountCircle, ExpandLess, ExpandMore, Search, Description, FilterList, Add
+  Dashboard as DashboardIcon, ListAlt, Info, AccountCircle, ExpandLess, ExpandMore, Search, History, Description, FilterList, Add
 } from '@mui/icons-material';
 import logo from './image/logo.png';
 import { googleLogout } from '@react-oauth/google';
@@ -16,29 +17,33 @@ function SearchUser() {
   const profile = location.state?.profile || JSON.parse(localStorage.getItem('profile'));
 
   const [openDataItems, setOpenDataItems] = useState(false);
-  const [openSearchModal, setOpenSearchModal] = useState(false); // State untuk modal pencarian
-
-  // State untuk menyimpan data items
-  const [dataItems] = useState([
-    { id: 1, name: 'Item A', type: 'Type 1', creationDate: '2024-10-26' },
-    { id: 2, name: 'Item B', type: 'Type 2', creationDate: '2024-10-27' },
-    { id: 3, name: 'Item C', type: 'Type 3', creationDate: '2024-10-28' },
-  ]);
+  const [openAccount, setOpenAccount] = useState(false);
+  const [setOpenSearchModal] = useState(false); // State untuk modal pencarian
+  const [openDetailModal, setOpenDetailModal] = useState(false); // State untuk modal detail
+  const [selectedItem, setSelectedItem] = useState(null); // State untuk menyimpan item yang dipilih
 
   const handleDataItemsClick = () => {
     setOpenDataItems((prev) => !prev);
   };
 
-  // Fungsi untuk membuka dan menutup modal pencarian
-  const handleSearchModalOpen = () => setOpenSearchModal(true);
-  const handleSearchModalClose = () => setOpenSearchModal(false);
+  const handleAccountClick = () => {
+    setOpenAccount((prev) => !prev);
+  };
 
-  const handleLogout = () => {
+  const handleSearchModalOpen = () => setOpenSearchModal(true);
+
+
+  const handleDetailModalOpen = (item) => {
+    setSelectedItem(item); // Set item yang dipilih untuk detail
+    setOpenDetailModal(true); // Buka modal detail
+  };
+  const handleDetailModalClose = () => setOpenDetailModal(false);
+
+  const logout = () => {
     googleLogout();
     localStorage.removeItem('profile');
     navigate('/');
   };
-  
 
   if (!profile) {
     return (
@@ -64,7 +69,7 @@ function SearchUser() {
               </Typography>
             </Box>
           </Box>
-          <Button variant="contained" color="error" onClick={handleLogout}>
+          <Button variant="contained" color="error" onClick={logout}>
             Log Out
           </Button>
         </Toolbar>
@@ -83,12 +88,13 @@ function SearchUser() {
       >
         <Toolbar />
         <List>
-          <ListItem button component={Link} to="/dashboarduser">
+          <ListItem button component={Link} to="/dashboardadmin">
             <ListItemIcon>
               <DashboardIcon />
             </ListItemIcon>
             <ListItemText primary="Dashboard" />
           </ListItem>
+
           <ListItem button onClick={handleDataItemsClick}>
             <ListItemIcon>
               <ListAlt />
@@ -98,32 +104,57 @@ function SearchUser() {
           </ListItem>
           <Collapse in={openDataItems} timeout="auto" unmountOnExit>
             <List component="div" disablePadding>
-              <ListItem button sx={{ pl: 4 }} component={Link} to="/searchuser">
+              <ListItem button sx={{ pl: 4 }} component={Link} to="/searchadmin">
                 <ListItemIcon>
                   <Search />
                 </ListItemIcon>
                 <ListItemText primary="Search" />
               </ListItem>
-              <ListItem button sx={{ pl: 4 }} component={Link} to="/createuser">
+              <ListItem button sx={{ pl: 4 }} component={Link} to="/createadmin">
                 <ListItemIcon>
                   <Description />
                 </ListItemIcon>
                 <ListItemText primary="Create" />
               </ListItem>
+              <ListItem button sx={{ pl: 4 }} component={Link} to="/history">
+                <ListItemIcon>
+                  <History />
+                </ListItemIcon>
+                <ListItemText primary="History" />
+              </ListItem>
             </List>
           </Collapse>
-          <ListItem button component={Link} to="/aboutuser">
+
+          <ListItem button component={Link} to="/aboutadmin">
             <ListItemIcon>
               <Info />
             </ListItemIcon>
             <ListItemText primary="About" />
           </ListItem>
-          <ListItem button component={Link} to="/account">
+
+          <ListItem button onClick={handleAccountClick}>
             <ListItemIcon>
               <AccountCircle />
             </ListItemIcon>
             <ListItemText primary="Account" />
+            {openAccount ? <ExpandLess /> : <ExpandMore />}
           </ListItem>
+          <Collapse in={openAccount} timeout="auto" unmountOnExit>
+            <List component="div" disablePadding>
+              <ListItem button sx={{ pl: 4 }} component={Link} to="/profileadmin">
+                <ListItemIcon>
+                  <AccountCircle />
+                </ListItemIcon>
+                <ListItemText primary="Profile" />
+              </ListItem>
+              <ListItem button sx={{ pl: 4 }} component={Link} to="/manageadmin">
+                <ListItemIcon>
+                  <AccountCircle />
+                </ListItemIcon>
+                <ListItemText primary="Manage" />
+              </ListItem>
+            </List>
+          </Collapse>
         </List>
       </Drawer>
 
@@ -157,7 +188,7 @@ function SearchUser() {
             <TextField
               size="small"
               variant="outlined"
-              placeholder="Filter BY"
+              placeholder="FILTER BY"
               sx={{
                 borderRadius: '20px',
                 bgcolor: 'white',
@@ -176,7 +207,7 @@ function SearchUser() {
             <TextField
               size="small"
               variant="outlined"
-              placeholder="Search"
+              placeholder="SEARCH"
               sx={{
                 borderRadius: '20px',
                 bgcolor: 'lightblue',
@@ -185,7 +216,7 @@ function SearchUser() {
               }}
               InputProps={{
                 startAdornment: (
-                  <IconButton sx={{ p: 0, mr: 1 }} onClick={handleSearchModalOpen}>
+                  <IconButton sx={{ p: 0, mr: 1 }} onClick={handleSearchModalOpen}> {/* Menambahkan aksi untuk membuka modal */}
                     <Search />
                   </IconButton>
                 ),
@@ -193,35 +224,42 @@ function SearchUser() {
             />
           </Box>
 
-          <Box display="flex" justifyContent="right" alignItems="center" sx={{ mb: 2 }}>
-            <IconButton color="primary">
-              <Add />
-            </IconButton>
-            <Typography variant="body2" sx={{ ml: 1 }}>
-              ADD ALL
+          <Box display="flex" justifyContent="space-between" alignItems="center" sx={{ mb: 0 }}>
+            <Typography variant="h4" gutterBottom sx={{ color: 'black', fontWeight: 'bold' }}>
+
             </Typography>
+            <Button color="primary" startIcon={<Add />}>
+              ADD ALL {/* Menambahkan kembali tombol "+ ADD ALL" */}
+            </Button>
           </Box>
 
           <Box component="table" style={{ width: '100%', borderCollapse: 'collapse' }}>
             <thead>
               <tr>
-                <th style={{ border: '1px solid #ddd', padding: '8px' }}>NO</th>
-                <th style={{ border: '1px solid #ddd', padding: '8px' }}>ITEM</th>
-                <th style={{ border: '1px solid #ddd', padding: '8px' }}>TYPE</th>
-                <th style={{ border: '1px solid #ddd', padding: '8px' }}>CREATION DATE</th>
-                <th style={{ border: '1px solid #ddd', padding: '8px', textAlign: 'center' }}>DETAIL</th>
-                <th style={{ border: '1px solid #ddd', padding: '8px', textAlign: 'center' }}>ADD</th>
+                <th style={{ border: '3px solid #ddd', padding: '8px', backgroundColor: '#e0e0e0' }}>NO</th>
+                <th style={{ border: '3px solid #ddd', padding: '8px', backgroundColor: '#e0e0e0' }}>ITEM</th>
+                <th style={{ border: '3px solid #ddd', padding: '8px', backgroundColor: '#e0e0e0' }}>TYPE</th>
+                <th style={{ border: '3px solid #ddd', padding: '8px', backgroundColor: '#e0e0e0' }}>CREATION DATE</th>
+                <th style={{ border: '3px solid #ddd', padding: '8px', backgroundColor: '#e0e0e0' }}>ACTION</th>
+                <th style={{ border: '3px solid #ddd', padding: '8px', backgroundColor: '#e0e0e0' }}>ADD</th>
               </tr>
             </thead>
             <tbody>
-              {dataItems.map((item) => (
+              {[{ id: 1, name: 'Item 1', type: 'Handphone', creationDate: '2024-01-01' }, { id: 2, name: 'Item 2', type: 'Tablet', creationDate: '2024-02-01' }].map((item, index) => (
                 <tr key={item.id}>
-                  <td style={{ border: '1px solid #ddd', padding: '8px' }}>{item.id}</td>
+                  <td style={{ border: '1px solid #ddd', padding: '8px' }}>{index + 1}</td>
                   <td style={{ border: '1px solid #ddd', padding: '8px' }}>{item.name}</td>
                   <td style={{ border: '1px solid #ddd', padding: '8px' }}>{item.type}</td>
                   <td style={{ border: '1px solid #ddd', padding: '8px' }}>{item.creationDate}</td>
                   <td style={{ border: '1px solid #ddd', padding: '8px', textAlign: 'center' }}>
-                    <Button variant="contained" size="small" onClick={() => alert(`Detail of ${item.name}`)}>Detail</Button>
+                    <Button
+                      variant="contained"
+                      size="small"
+                      color="primary"
+                      onClick={() => handleDetailModalOpen(item)} // Panggil fungsi dengan item yang dipilih
+                    >
+                      DETAIL
+                    </Button>
                   </td>
                   <td style={{ border: '1px solid #ddd', padding: '8px', textAlign: 'center' }}>
                     <Button variant="contained" size="small" color="primary">Add</Button>
@@ -229,35 +267,25 @@ function SearchUser() {
                 </tr>
               ))}
             </tbody>
+
           </Box>
         </Box>
 
-        {/* Modal untuk pencarian */}
-        <Modal open={openSearchModal} onClose={handleSearchModalClose}>
+        {/* Modal Detail */}
+        <Modal open={openDetailModal} onClose={handleDetailModalClose}>
           <Box sx={{
-            width: 400,
-            bgcolor: 'white',
-            p: 3,
-            borderRadius: '8px',
-            position: 'absolute',
-            top: '50%',
-            left: '50%',
-            transform: 'translate(-50%, -50%)',
-            boxShadow: 24,
+            position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)',
+            bgcolor: 'white', padding: 4, borderRadius: 2, boxShadow: 24
           }}>
-            <Typography variant="h6" align="center" sx={{ mb: 2 }}>
-              ADD USER
-            </Typography>
-            <TextField fullWidth label="Name" variant="outlined" margin="normal" />
-            <TextField fullWidth label="Code Items" variant="outlined" margin="normal" />
-            <InputLabel>Type</InputLabel>
-            <RadioGroup row>
-              <FormControlLabel value="O HANDPHONE" control={<Radio />} label="O HANDPHONE" />
-              <FormControlLabel value="O TABLET" control={<Radio />} label="O TABLET" />
-            </RadioGroup>
-            <Box display="flex" justifyContent="center" sx={{ mt: 2 }}>
-              <Button variant="contained" color="primary" onClick={handleSearchModalClose}>Submit</Button>
-            </Box>
+            {selectedItem && (
+              <>
+                <Typography variant="h6" gutterBottom>Detail Item</Typography>
+                <Typography>Name: {selectedItem.name}</Typography>
+                <Typography>Type: {selectedItem.type}</Typography>
+                <Typography>Creation Date: {selectedItem.creationDate}</Typography>
+              </>
+            )}
+            <Button onClick={handleDetailModalClose} color="error" sx={{ mt: 2 }}>Close</Button>
           </Box>
         </Modal>
       </Box>
