@@ -6,7 +6,7 @@ import {
   Modal
 } from '@mui/material';
 import {
-  Dashboard as DashboardIcon, ListAlt, Info, AccountCircle, ExpandLess, ExpandMore, Search, History, Description, FilterList, Add
+  Dashboard as DashboardIcon, ListAlt, Info, AccountCircle, ExpandLess, ExpandMore, Search, Description, FilterList, Add
 } from '@mui/icons-material';
 import logo from './image/logo.png';
 import { googleLogout } from '@react-oauth/google';
@@ -17,7 +17,6 @@ function SearchUser() {
   const profile = location.state?.profile || JSON.parse(localStorage.getItem('profile'));
 
   const [openDataItems, setOpenDataItems] = useState(false);
-  const [openAccount, setOpenAccount] = useState(false);
   const [setOpenSearchModal] = useState(false); // State untuk modal pencarian
   const [openDetailModal, setOpenDetailModal] = useState(false); // State untuk modal detail
   const [selectedItem, setSelectedItem] = useState(null); // State untuk menyimpan item yang dipilih
@@ -26,9 +25,7 @@ function SearchUser() {
     setOpenDataItems((prev) => !prev);
   };
 
-  const handleAccountClick = () => {
-    setOpenAccount((prev) => !prev);
-  };
+  
 
   const handleSearchModalOpen = () => setOpenSearchModal(true);
 
@@ -88,13 +85,12 @@ function SearchUser() {
       >
         <Toolbar />
         <List>
-          <ListItem button component={Link} to="/dashboardadmin">
+          <ListItem button component={Link} to="/dashboarduser">
             <ListItemIcon>
               <DashboardIcon />
             </ListItemIcon>
             <ListItemText primary="Dashboard" />
           </ListItem>
-
           <ListItem button onClick={handleDataItemsClick}>
             <ListItemIcon>
               <ListAlt />
@@ -104,57 +100,32 @@ function SearchUser() {
           </ListItem>
           <Collapse in={openDataItems} timeout="auto" unmountOnExit>
             <List component="div" disablePadding>
-              <ListItem button sx={{ pl: 4 }} component={Link} to="/searchadmin">
+              <ListItem button sx={{ pl: 4 }} component={Link} to="/searchuser">
                 <ListItemIcon>
                   <Search />
                 </ListItemIcon>
                 <ListItemText primary="Search" />
               </ListItem>
-              <ListItem button sx={{ pl: 4 }} component={Link} to="/createadmin">
+              <ListItem button sx={{ pl: 4 }} component={Link} to="/createuser">
                 <ListItemIcon>
                   <Description />
                 </ListItemIcon>
                 <ListItemText primary="Create" />
               </ListItem>
-              <ListItem button sx={{ pl: 4 }} component={Link} to="/history">
-                <ListItemIcon>
-                  <History />
-                </ListItemIcon>
-                <ListItemText primary="History" />
-              </ListItem>
             </List>
           </Collapse>
-
-          <ListItem button component={Link} to="/aboutadmin">
+          <ListItem button component={Link} to="/aboutuser">
             <ListItemIcon>
               <Info />
             </ListItemIcon>
             <ListItemText primary="About" />
           </ListItem>
-
-          <ListItem button onClick={handleAccountClick}>
+          <ListItem button component={Link} to="/account">
             <ListItemIcon>
               <AccountCircle />
             </ListItemIcon>
             <ListItemText primary="Account" />
-            {openAccount ? <ExpandLess /> : <ExpandMore />}
           </ListItem>
-          <Collapse in={openAccount} timeout="auto" unmountOnExit>
-            <List component="div" disablePadding>
-              <ListItem button sx={{ pl: 4 }} component={Link} to="/profileadmin">
-                <ListItemIcon>
-                  <AccountCircle />
-                </ListItemIcon>
-                <ListItemText primary="Profile" />
-              </ListItem>
-              <ListItem button sx={{ pl: 4 }} component={Link} to="/manageadmin">
-                <ListItemIcon>
-                  <AccountCircle />
-                </ListItemIcon>
-                <ListItemText primary="Manage" />
-              </ListItem>
-            </List>
-          </Collapse>
         </List>
       </Drawer>
 
