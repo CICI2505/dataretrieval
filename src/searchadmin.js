@@ -19,6 +19,8 @@ function SearchAdmin() {
   const [openDataItems, setOpenDataItems] = useState(false);
   const [openAccount, setOpenAccount] = useState(false);
   const [openSearchModal, setOpenSearchModal] = useState(false); // State untuk modal pencarian
+  const [openDetailModal, setOpenDetailModal] = useState(false); // State untuk modal detail
+  const [selectedItem, setSelectedItem] = useState(null); // State untuk menyimpan item yang dipilih
 
   const handleDataItemsClick = () => {
     setOpenDataItems((prev) => !prev);
@@ -30,6 +32,12 @@ function SearchAdmin() {
 
   const handleSearchModalOpen = () => setOpenSearchModal(true);
   const handleSearchModalClose = () => setOpenSearchModal(false);
+
+  const handleDetailModalOpen = (item) => {
+    setSelectedItem(item); // Set item yang dipilih untuk detail
+    setOpenDetailModal(true); // Buka modal detail
+  };
+  const handleDetailModalClose = () => setOpenDetailModal(false);
 
   const logout = () => {
     googleLogout();
@@ -216,14 +224,13 @@ function SearchAdmin() {
             />
           </Box>
 
-          {/* Ikon "+" ditempatkan di sini */}
-          <Box display="flex" justifyContent="right" alignItems="center" sx={{ mb: 2 }}>
-            <IconButton color="primary">
-              <Add />
-            </IconButton>
-            <Typography variant="body2" sx={{ ml: 1 }}>
-              ADD ALL
+          <Box display="flex" justifyContent="space-between" alignItems="center" sx={{ mb: 0 }}>
+            <Typography variant="h4" gutterBottom sx={{ color: 'black', fontWeight: 'bold' }}>
+              
             </Typography>
+            <Button color="primary" startIcon={<Add />}>
+              ADD ALL {/* Menambahkan kembali tombol "+ ADD ALL" */}
+            </Button>
           </Box>
 
           <Box component="table" style={{ width: '100%', borderCollapse: 'collapse' }}>
@@ -233,73 +240,43 @@ function SearchAdmin() {
                 <th style={{ border: '3px solid #ddd', padding: '8px', backgroundColor: '#e0e0e0' }}>ITEM</th>
                 <th style={{ border: '3px solid #ddd', padding: '8px', backgroundColor: '#e0e0e0' }}>TYPE</th>
                 <th style={{ border: '3px solid #ddd', padding: '8px', backgroundColor: '#e0e0e0' }}>CREATION DATE</th>
-                <th style={{ border: '3px solid #ddd', padding: '8px', backgroundColor: '#e0e0e0', textAlign: 'center' }}>ACTION</th>
-                <th style={{ border: '3px solid #ddd', padding: '8px', backgroundColor: '#e0e0e0' }}>ADD</th>
+                <th style={{ border: '3px solid #ddd', padding: '8px', backgroundColor: '#e0e0e0' }}>ACTION</th>
               </tr>
             </thead>
             <tbody>
-              {/* Data tabel ditambahkan di sini */}
-              <tr>
-                <td style={{ border: '3px solid #ddd', padding: '8px' }}>1</td>
-                <td style={{ border: '3px solid #ddd', padding: '8px' }}>Contoh Item 1</td>
-                <td style={{ border: '3px solid #ddd', padding: '8px' }}>Handphone</td>
-                <td style={{ border: '3px solid #ddd', padding: '8px' }}>01-01-2024</td>
-                <td style={{ border: '3px solid #ddd', padding: '8px', textAlign: 'center' }}>
-                  <Button variant="contained" color="primary">Detail</Button>
-                </td>
-                <td style={{ border: '3px solid #ddd', padding: '8px' }}></td>
-              </tr>
-              {/* Tambah data item lain di sini */}
+              {/* Looping untuk menampilkan data item */}
+              {[{ id: 1, name: 'Item 1', type: 'Handphone', creationDate: '2024-01-01' }, { id: 2, name: 'Item 2', type: 'Tablet', creationDate: '2024-02-01' }].map((item, index) => (
+                <tr key={item.id}>
+                  <td style={{ border: '1px solid #ddd', padding: '8px' }}>{index + 1}</td>
+                  <td style={{ border: '1px solid #ddd', padding: '8px' }}>{item.name}</td>
+                  <td style={{ border: '1px solid #ddd', padding: '8px' }}>{item.type}</td>
+                  <td style={{ border: '1px solid #ddd', padding: '8px' }}>{item.creationDate}</td>
+                  <td style={{ border: '1px solid #ddd', padding: '8px' }}>
+                    <Button onClick={() => handleDetailModalOpen(item)} variant="outlined" color="primary">
+                      Detail
+                    </Button>
+                  </td>
+                </tr>
+              ))}
             </tbody>
           </Box>
         </Box>
 
-        {/* Modal Pencarian */}
-        <Modal open={openSearchModal} onClose={handleSearchModalClose}>
-          <Box
-            sx={{
-              position: 'absolute',
-              top: '50%',
-              left: '50%',
-              transform: 'translate(-50%, -50%)',
-              bgcolor: 'white',
-              boxShadow: 24,
-              borderRadius: 2,
-              p: 4,
-              width: 400, // Ubah ukuran modal sesuai kebutuhan
-            }}
-          >
-            <Typography variant="h5" align="center" sx={{ mb: 2 }}>
-              ADD USER
-            </Typography>
-            <TextField
-              fullWidth
-              label="NAME"
-              variant="outlined"
-              sx={{ mb: 2 }}
-            />
-            <TextField
-              fullWidth
-              label="CODE ITEMS"
-              variant="outlined"
-              sx={{ mb: 2 }}
-            />
-            <InputLabel>TYPE</InputLabel>
-            <RadioGroup row>
-              <FormControlLabel value="Handphone" control={<Radio />} label="HANDPHONE" />
-              <FormControlLabel value="Tablet" control={<Radio />} label="TABLET" />
-            </RadioGroup>
-
-            <Box>
-              <InputLabel id="item-type-label" style={{ marginTop: '10px' }}>DATE CREATED</InputLabel>
-              <input type="date" placeholder="xxxx-xx-xx" style={{ marginTop: '10px' }} />
-            </Box>
-
-            <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 15 }}>
-              <Button variant="contained" onClick={handleSearchModalClose}>
-                Search
-              </Button>
-            </Box>
+        {/* Modal Detail */}
+        <Modal open={openDetailModal} onClose={handleDetailModalClose}>
+          <Box sx={{
+            position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)',
+            bgcolor: 'white', padding: 4, borderRadius: 2, boxShadow: 24
+          }}>
+            {selectedItem && (
+              <>
+                <Typography variant="h6" gutterBottom>Detail Item</Typography>
+                <Typography>Name: {selectedItem.name}</Typography>
+                <Typography>Type: {selectedItem.type}</Typography>
+                <Typography>Creation Date: {selectedItem.creationDate}</Typography>
+              </>
+            )}
+            <Button onClick={handleDetailModalClose} color="error" sx={{ mt: 2 }}>Close</Button>
           </Box>
         </Modal>
       </Box>
