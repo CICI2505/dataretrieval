@@ -8,17 +8,11 @@ function EditProfile({ profile, handleOpenEditModal }) {
         ACCOUNT
       </Typography>
       {[
-        { label: "NAME", value: profile.name || 'ADMIN' },
-        { label: "NIK", value: "45312342" },
-        { label: "BORN DATE", value: "12 August 1987" },
-        { label: "DEPARTMENT", value: "ADMIN" },
-        { label: "PHONE", value: profile.phone || '087251742212' },
-        {
-          label: "PERIOD",
-          value: "AVAILABLE",
-          color: 'green',
-          underline: true
-        }
+        { label: "NAME", value: profile.name },
+        { label: "NIK", value: profile.nik },
+        { label: "BORN DATE", value: profile.born_date },
+        { label: "DEPARTMENT", value: profile.department },
+        { label: "PHONE", value: profile.phone_number },
       ].map((item, index) => (
         <Box key={index} sx={{ display: 'flex', mb: 4, alignItems: 'center' }}>
           <Typography

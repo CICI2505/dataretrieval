@@ -1,4 +1,6 @@
 import React, { useState } from 'react';
+import axios from 'axios';
+import moment from 'moment';
 import { useLocation, useNavigate, Link } from 'react-router-dom';
 import {
   AppBar, Toolbar, Drawer, List, ListItem, ListItemIcon, ListItemText,
@@ -6,7 +8,7 @@ import {
   Modal
 } from '@mui/material';
 import {
-  Dashboard as DashboardIcon, ListAlt, Info, AccountCircle, ExpandLess, ExpandMore, Search, History, Description, FilterList, Add
+  Dashboard as DashboardIcon, ListAlt, Info, AccountCircle, ExpandLess, ExpandMore, Search, History, Description, Add
 } from '@mui/icons-material';
 import logo from './image/logo.png';
 import { googleLogout } from '@react-oauth/google';
@@ -16,11 +18,26 @@ function SearchAdmin() {
   const navigate = useNavigate();
   const profile = location.state?.profile || JSON.parse(localStorage.getItem('profile'));
 
-  const [openDataItems, setOpenDataItems] = useState(false);
   const [openAccount, setOpenAccount] = useState(false);
-  const [setOpenSearchModal] = useState(false); // State untuk modal pencarian
-  const [openDetailModal, setOpenDetailModal] = useState(false); // State untuk modal detail
-  const [selectedItem, setSelectedItem] = useState(null); // State untuk menyimpan item yang dipilih
+  const [openDataItems, setOpenDataItems] = useState(false);
+  const [openSearchModal, setOpenSearchModal] = useState(false);
+  const [openDetailModal, setOpenDetailModal] = useState(false);
+  const [selectedItem, setSelectedItem] = useState(null);
+  const [barangData, setbarangData] = useState(null);
+
+  const handleNavigate = (id) => {
+    navigate('/createadmin?ids=' + id);
+  };
+
+  const handleNavigateAll = () => {
+
+    if (!barangData) {
+      alert('Data barang tidak ditemukan.');
+      return;
+    }
+    const id = barangData.map((item) => item.id).join(',');
+    navigate('/createadmin?ids=' + id);
+  };
 
   const handleDataItemsClick = () => {
     setOpenDataItems((prev) => !prev);
@@ -31,11 +48,9 @@ function SearchAdmin() {
   };
 
   const handleSearchModalOpen = () => setOpenSearchModal(true);
-  
-
   const handleDetailModalOpen = (item) => {
-    setSelectedItem(item); // Set item yang dipilih untuk detail
-    setOpenDetailModal(true); // Buka modal detail
+    setSelectedItem(item);
+    setOpenDetailModal(true);
   };
   const handleDetailModalClose = () => setOpenDetailModal(false);
 
@@ -43,6 +58,49 @@ function SearchAdmin() {
     googleLogout();
     localStorage.removeItem('profile');
     navigate('/');
+  };
+
+  const [formData, setFormData] = useState({
+    name: '',
+    code_item: '',
+    category: '',
+    creation_date: '',
+  });
+
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setFormData((prevData) => ({
+      ...prevData,
+      [name]: value
+    }));
+  };
+
+  const handleSearchModal = async () => {
+    try {
+
+      if (!formData.name || !formData.code_item || !formData.category || !formData.creation_date) {
+        alert('Semua field harus diisi!');
+        return; // Hentikan eksekusi jika ada field yang kosong
+      }
+      
+      // Kirim data ke API /api/pegawai
+      const response = await axios.get('http://127.0.0.1:8000/dummy/search', {
+        params: formData
+      });
+
+      setbarangData(response.data); // Simpan data ke state
+
+      setOpenSearchModal(false); // Menutup modal
+      setFormData({ // Reset form
+        name: '',
+        code_item: '',
+        category: '',
+        creation_date: '',
+      });
+    } catch (error) {
+      console.error('Error creating Search:', error);
+      alert('Gagal mencari data barang. Silakan coba lagi.');
+    }
   };
 
   if (!profile) {
@@ -188,25 +246,6 @@ function SearchAdmin() {
             <TextField
               size="small"
               variant="outlined"
-              placeholder="FILTER BY"
-              sx={{
-                borderRadius: '20px',
-                bgcolor: 'white',
-                border: '1px solid black',
-                width: '150px',
-                '& .MuiOutlinedInput-notchedOutline': { border: 'none' },
-              }}
-              InputProps={{
-                startAdornment: (
-                  <IconButton sx={{ p: 0, mr: 1 }}>
-                    <FilterList />
-                  </IconButton>
-                ),
-              }}
-            />
-            <TextField
-              size="small"
-              variant="outlined"
               placeholder="SEARCH"
               sx={{
                 borderRadius: '20px',
@@ -216,7 +255,7 @@ function SearchAdmin() {
               }}
               InputProps={{
                 startAdornment: (
-                  <IconButton sx={{ p: 0, mr: 1 }} onClick={handleSearchModalOpen}> {/* Menambahkan aksi untuk membuka modal */}
+                  <IconButton sx={{ p: 0, mr: 1 }} onClick={handleSearchModalOpen}>
                     <Search />
                   </IconButton>
                 ),
@@ -228,8 +267,8 @@ function SearchAdmin() {
             <Typography variant="h4" gutterBottom sx={{ color: 'black', fontWeight: 'bold' }}>
               
             </Typography>
-            <Button color="primary" startIcon={<Add />}>
-              ADD ALL {/* Menambahkan kembali tombol "+ ADD ALL" */}
+            <Button color="primary" onClick={() => handleNavigateAll()} startIcon={<Add />}>
+              ADD ALL
             </Button>
           </Box>
 
@@ -237,24 +276,32 @@ function SearchAdmin() {
             <thead>
               <tr>
                 <th style={{ border: '3px solid #ddd', padding: '8px', backgroundColor: '#e0e0e0' }}>NO</th>
-                <th style={{ border: '3px solid #ddd', padding: '8px', backgroundColor: '#e0e0e0' }}>ITEM</th>
-                <th style={{ border: '3px solid #ddd', padding: '8px', backgroundColor: '#e0e0e0' }}>TYPE</th>
+                <th style={{ border: '3px solid #ddd', padding: '8px', backgroundColor: '#e0e0e0' }}>NAME</th>
+                <th style={{ border: '3px solid #ddd', padding: '8px', backgroundColor: '#e0e0e0' }}>CATEGORY</th>
                 <th style={{ border: '3px solid #ddd', padding: '8px', backgroundColor: '#e0e0e0' }}>CREATION DATE</th>
                 <th style={{ border: '3px solid #ddd', padding: '8px', backgroundColor: '#e0e0e0' }}>ACTION</th>
+                <th style={{ border: '3px solid #ddd', padding: '8px', backgroundColor: '#e0e0e0' }}>ADD</th>
               </tr>
             </thead>
             <tbody>
-              {/* Looping untuk menampilkan data item */}
-              {[{ id: 1, name: 'Item 1', type: 'Handphone', creationDate: '2024-01-01' }, { id: 2, name: 'Item 2', type: 'Tablet', creationDate: '2024-02-01' }].map((item, index) => (
+              {barangData?.map((item, index) => (
                 <tr key={item.id}>
                   <td style={{ border: '1px solid #ddd', padding: '8px' }}>{index + 1}</td>
                   <td style={{ border: '1px solid #ddd', padding: '8px' }}>{item.name}</td>
-                  <td style={{ border: '1px solid #ddd', padding: '8px' }}>{item.type}</td>
-                  <td style={{ border: '1px solid #ddd', padding: '8px' }}>{item.creationDate}</td>
-                  <td style={{ border: '1px solid #ddd', padding: '8px' }}>
-                    <Button onClick={() => handleDetailModalOpen(item)} variant="outlined" color="primary">
-                      Detail
+                  <td style={{ border: '1px solid #ddd', padding: '8px' }}>{item.category}</td>
+                  <td style={{ border: '1px solid #ddd', padding: '8px' }}>{moment(item.creation_date).locale('id').format('D MMMM YYYY')}</td>
+                  <td style={{ border: '1px solid #ddd', padding: '8px', textAlign: 'center' }}>
+                    <Button
+                      variant="contained"
+                      size="small"
+                      color="primary"
+                      onClick={() => handleDetailModalOpen(item)}
+                    >
+                      DETAIL
                     </Button>
+                  </td>
+                  <td style={{ border: '1px solid #ddd', padding: '8px', textAlign: 'center' }}>
+                    <Button variant="contained" size="small" color="primary" onClick={() => handleNavigate(item.id)}>Add</Button>
                   </td>
                 </tr>
               ))}
@@ -264,19 +311,175 @@ function SearchAdmin() {
 
         {/* Modal Detail */}
         <Modal open={openDetailModal} onClose={handleDetailModalClose}>
-          <Box sx={{
-            position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)',
-            bgcolor: 'white', padding: 4, borderRadius: 2, boxShadow: 24
-          }}>
+          <Box
+            sx={{
+              position: 'absolute',
+              top: '50%',
+              left: '50%',
+              transform: 'translate(-50%, -50%)',
+              bgcolor: 'background.paper',
+              padding: 4,
+              borderRadius: 2,
+              boxShadow: 24,
+              width: 400,
+            }}
+          >
             {selectedItem && (
               <>
-                <Typography variant="h6" gutterBottom>Detail Item</Typography>
-                <Typography>Name: {selectedItem.name}</Typography>
-                <Typography>Type: {selectedItem.type}</Typography>
-                <Typography>Creation Date: {selectedItem.creationDate}</Typography>
+                <Typography
+                  variant="h6"
+                  sx={{
+                    fontWeight: 'bold',
+                    mb: 3,
+                  }}
+                >
+                  DETAIL ITEM
+                </Typography>
+                <Box
+                  sx={{
+                    display: 'grid',
+                    gridTemplateColumns: 'auto 20px 1fr',
+                    rowGap: 1.5,
+                    columnGap: 2,
+                  }}
+                >
+                  <Typography sx={{ fontWeight: 'bold' }}>Name</Typography>
+                  <Typography sx={{ textAlign: 'center', fontWeight: 'bold' }}>:</Typography>
+                  <Typography>{selectedItem.name}</Typography>
+
+                  <Typography sx={{ fontWeight: 'bold' }}>Code Items</Typography>
+                  <Typography sx={{ textAlign: 'center', fontWeight: 'bold' }}>:</Typography>
+                  <Typography>{selectedItem.code_item}</Typography>
+
+                  <Typography sx={{ fontWeight: 'bold' }}>Category</Typography>
+                  <Typography sx={{ textAlign: 'center', fontWeight: 'bold' }}>:</Typography>
+                  <Typography>{selectedItem.category}</Typography>
+
+                  <Typography sx={{ fontWeight: 'bold' }}>Creation Date</Typography>
+                  <Typography sx={{ textAlign: 'center', fontWeight: 'bold' }}>:</Typography>
+                  <Typography>{moment(selectedItem.creation_date).locale('id').format('D MMMM YYYY')}</Typography>
+
+                  <Typography sx={{ fontWeight: 'bold' }}>Storage Location</Typography>
+                  <Typography sx={{ textAlign: 'center', fontWeight: 'bold' }}>:</Typography>
+                  <Typography>{selectedItem.storage_location}</Typography>
+
+                  <Typography sx={{ fontWeight: 'bold' }}>Stok</Typography>
+                  <Typography sx={{ textAlign: 'center', fontWeight: 'bold' }}>:</Typography>
+                  <Typography>{selectedItem.stok} PCS</Typography>
+                </Box>
+                <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2 }}>
+                  <Button
+                    onClick={handleDetailModalClose}
+                    color="error"
+                    variant="contained"
+                    size="small"
+                  >
+                    Close
+                  </Button>
+                </Box>
               </>
             )}
-            <Button onClick={handleDetailModalClose} color="error" sx={{ mt: 2 }}>Close</Button>
+          </Box>
+        </Modal>
+
+        {/* Modal Pencarian */}
+        <Modal open={openSearchModal} onClose={() => setOpenSearchModal(false)}>
+          <Box
+            sx={{
+              position: 'absolute',
+              top: '50%',
+              left: '50%',
+              transform: 'translate(-50%, -50%)',
+              bgcolor: 'background.paper',
+              padding: 6,
+              borderRadius: 2,
+              boxShadow: 24,
+              width: { xs: '95%', sm: 600 },
+              overflowY: 'auto',
+            }}
+          >
+            {/* Header Modal */}
+            <Typography variant="h6" sx={{ fontWeight: 'bold', textAlign: 'left', mb: 3 }}>
+              SEARCH
+            </Typography>
+
+            {/* Input Fields */}
+            <Box component="form" sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+              <TextField
+                label="Name"
+                variant="outlined"
+                fullWidth
+                size="medium"
+                name="name"
+                value={formData.name}
+                onChange={handleInputChange}
+              />
+              <TextField
+                label="Code Items"
+                variant="outlined"
+                fullWidth
+                size="medium"
+                name="code_item"
+                value={formData.code_item}
+                onChange={handleInputChange}
+              />
+              <TextField
+                label="Category"
+                variant="outlined"
+                fullWidth
+                size="medium"
+                name="category"
+                value={formData.category}
+                onChange={handleInputChange}
+              />
+              <TextField
+                label="Date Created"
+                variant="outlined"
+                fullWidth
+                size="medium"
+                type="date"
+                name="creation_date"
+                value={formData.creation_date}
+                onChange={handleInputChange}
+                InputLabelProps={{ shrink: true }}
+              />
+            </Box>
+
+            {/* Buttons */}
+            <Box
+              sx={{
+                display: 'flex',
+                justifyContent: 'flex-end',
+                alignItems: 'center',
+                mt: 4,
+                gap: 2,
+              }}
+            >
+              <Button
+                variant="contained"
+                color="error"
+                onClick={() => setOpenSearchModal(false)}
+                sx={{
+                  fontSize: '1rem',
+                  padding: '5px 15px',
+                  minWidth: '9px',
+                }}
+              >
+                Cancel
+              </Button>
+              <Button
+                variant="contained"
+                color="primary"
+                onClick={handleSearchModal}
+                sx={{
+                  fontSize: '1rem',
+                  padding: '5px 15px',
+                  minWidth: '90px',
+                }}
+              >
+                Search
+              </Button>
+            </Box>
           </Box>
         </Modal>
       </Box>

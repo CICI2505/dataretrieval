@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
 import { Modal, Box, Typography, Button } from '@mui/material';
+import axios from 'axios';
 
-const DetailAkun = ({ open, user, onClose }) => {
+const DetailAkun = ({ open, user, onClose,onDelete }) => {
   const [confirmOpen, setConfirmOpen] = useState(false);
+  const [loading, setLoading] = useState(false); // Untuk indikasi loading
 
   if (!user) return null; // Jika tidak ada pengguna yang dipilih, jangan render modal
 
@@ -10,10 +12,21 @@ const DetailAkun = ({ open, user, onClose }) => {
     setConfirmOpen(true); // Buka modal konfirmasi
   };
 
-  const handleConfirmDelete = () => {
-    setConfirmOpen(false);
-    onClose(); // Tutup modal utama setelah konfirmasi penghapusan
-    // Lakukan aksi penghapusan akun di sini
+  const handleConfirmDelete = async () => {
+    try {
+      setLoading(true); // Tampilkan loading
+      const response = await axios.delete(`http://127.0.0.1:5000/api/pegawai/${user.id}`);
+      console.log('Data deleted:', response.data);
+
+      setConfirmOpen(false);
+      onClose(); // Tutup modal utama setelah konfirmasi penghapusan
+      if (onDelete) onDelete(user.id);
+    } catch (error) {
+      console.error('Error deleting account:', error);
+      alert('Failed to delete account');
+    } finally {
+      setLoading(false); // Sembunyikan loading
+    }
   };
 
   const handleCloseConfirm = () => {
@@ -41,17 +54,11 @@ const DetailAkun = ({ open, user, onClose }) => {
               ACCOUNT
             </Typography>
             {[
-              { label: "NAME", value: "SULYONO" },
-              { label: "NIK", value: "45312342" },
-              { label: "BORN DATE", value: "12 August 1987" },
-              { label: "DEPARTMENT", value: "ADMIN" },
-              { label: "PHONE", value: "087251742212" },
-              {
-                label: "PERIOD",
-                value: "AVAILABLE",
-                color: 'green',
-                underline: true
-              }
+              { label: "NAME", value: user.name },
+              { label: "NIK", value: user.nik },
+              { label: "BORN DATE", value: user.born_date },
+              { label: "DEPARTMENT", value: user.department },
+              { label: "PHONE", value: user.phone_number },
             ].map((item, index) => (
               <Box key={index} sx={{ display: 'flex', mb: 4, alignItems: 'center' }}>
                 <Typography
@@ -82,6 +89,7 @@ const DetailAkun = ({ open, user, onClose }) => {
                 variant="contained"
                 onClick={handleDeleteClick} // Memicu modal konfirmasi
                 sx={{ mr: 1, backgroundColor: 'red', '&:hover': { backgroundColor: 'darkred' } }}
+                disabled={loading} // Disabled jika sedang loading
               >
                 DELETE
               </Button>
@@ -116,11 +124,12 @@ const DetailAkun = ({ open, user, onClose }) => {
               variant="contained"
               onClick={handleConfirmDelete}
               sx={{ backgroundColor: 'red', '&:hover': { backgroundColor: 'darkred' } }}
+              disabled={loading} // Disabled jika sedang loading
             >
-              NO
+              {loading ? 'DELETING...' : 'YES'}
             </Button>
             <Button variant="contained" onClick={handleCloseConfirm}>
-              YES
+              NO
             </Button>
           </Box>
         </Box>

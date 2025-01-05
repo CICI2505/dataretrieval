@@ -1,4 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
+import moment from 'moment';
 import { useLocation, useNavigate, Link } from 'react-router-dom';
 import {
   AppBar, Toolbar, Drawer, List, ListItem, ListItemIcon, ListItemText,
@@ -17,6 +19,19 @@ function HistoryAdmin() {
 
   const [openDataItems, setOpenDataItems] = useState(false);
   const [openAccount, setOpenAccount] = useState(false);
+  const [historyData, setHistoryData] = useState(null);
+
+
+  useEffect(() => {
+    axios.get(`http://127.0.0.1:5000/api/file`)
+      .then((response) => {
+        setHistoryData(response.data); // Simpan data ke state
+      })
+      .catch((error) => {
+        console.error('Error fetching history:', error);
+      });
+  }, []); // Menambahkan array dependensi kosong
+
 
   const handleDataItemsClick = () => {
     setOpenDataItems((prev) => !prev);
@@ -171,27 +186,7 @@ function HistoryAdmin() {
             </Typography>
           </Box>
 
-          <Box display="flex" justifyContent="flex-end" sx={{ mb: 5 }}>
-            <TextField
-              size="small"
-              variant="outlined"
-              placeholder="FILTER BY"
-              sx={{
-                borderRadius: '20px',
-                bgcolor: 'white',
-                border: '1px solid black', 
-                width: '150px',
-                '& .MuiOutlinedInput-notchedOutline': { border: 'none' },
-              }} 
-              InputProps={{
-                startAdornment: (
-                  <IconButton sx={{ p: 0, mr: 1 }}>
-                    <FilterList />
-                  </IconButton>
-                ),
-              }}
-            />
-          </Box>
+          
 
           <Box component="table" style={{ width: '100%', borderCollapse: 'collapse' }}>
             <thead>
@@ -203,13 +198,14 @@ function HistoryAdmin() {
               </tr>
             </thead>
             <tbody>
-              {/* Data rows can be added here */}
-              <tr>
-                <td style={{ border: '1px solid #ddd', padding: '8px' }}>1</td>
-                <td style={{ border: '1px solid #ddd', padding: '8px' }}>Item 1</td>
-                <td style={{ border: '1px solid #ddd', padding: '8px' }}>Type A</td>
-                <td style={{ border: '1px solid #ddd', padding: '8px' }}>2024-10-24</td>
-              </tr>
+            {historyData?.map((item, index) => (
+                <tr key={item.id}>
+                  <td style={{ border: '1px solid #ddd', padding: '8px' }}>{index + 1}</td>
+                  <td style={{ border: '1px solid #ddd', padding: '8px' }}>{item.nama_file}</td>
+                  <td style={{ border: '1px solid #ddd', padding: '8px' }}>{item.creator}</td>
+                  <td style={{ border: '1px solid #ddd', padding: '8px' }}> {moment(item.creation_date).locale('id').format('D MMMM YYYY')}</td>
+                </tr>
+              ))}
               {/* More rows can be added as needed */}
             </tbody>
           </Box>

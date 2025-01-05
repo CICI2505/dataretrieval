@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
 import { useLocation, useNavigate, Link } from 'react-router-dom';
 import {
   AppBar, Toolbar, Drawer, List, ListItem, ListItemIcon, ListItemText,
@@ -12,16 +13,40 @@ import { googleLogout } from '@react-oauth/google';
 import AccountDetails from './EditProfile'; 
 
 function CreateAdmin() {
+
+  const [openAccount, setOpenAccount] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
-  const profile = location.state?.profile || JSON.parse(localStorage.getItem('profile'));
+  const profileFromStorage = JSON.parse(localStorage.getItem('profile'));
+  const userId = localStorage.getItem('userId');
+  const profile = location.state?.profile || profileFromStorage;
 
   const [openDataItems, setOpenDataItems] = useState(false);
-  const [openAccount, setOpenAccount] = useState(false);
   const [openEditModal, setOpenEditModal] = useState(false);
-  const [openAlertModal, setOpenAlertModal] = useState(false);
-  const [profileState, setProfileState] = useState(profile || {}); // Initial profile state
-  const [tempProfile, setTempProfile] = useState({ name: '', phone: '' }); // Temporary state for editing
+  const [openAlertModal, setOpenAlertModal] = useState(false); // New state for alert modal
+  const [profileState, setProfile] = useState(profile);
+  const [tempProfile, setTempProfile] = useState({}); // Initialize as empty object
+  const [isLoading, setIsLoading] = useState(true);
+  const [profileData, setProfileData] = useState(null);
+
+
+    // Fetch profile data from API
+    useEffect(() => {
+      if (userId) {
+        setIsLoading(true);
+        axios.get(`http://127.0.0.1:5000/api/pegawai/${userId}`)
+          .then((response) => {
+            setProfileData(response.data); // Simpan data ke state
+            setIsLoading(false); // Hentikan loading
+            setTempProfile(response.data); // Set initial temp profile with API data
+          })
+          .catch((error) => {
+            console.error('Error fetching profile:', error);
+            setIsLoading(false);
+          });
+      }
+    }, [userId]);
+
 
   const handleDataItemsClick = () => {
     setOpenDataItems((prev) => !prev);
@@ -32,7 +57,7 @@ function CreateAdmin() {
   };
 
   const handleOpenEditModal = () => {
-    setTempProfile({ name: profileState.name, phone: profileState.phone });
+    setTempProfile({...profileData}); // Create a copy of current profile data
     setOpenEditModal(true);
   };
 
@@ -48,23 +73,48 @@ function CreateAdmin() {
     setOpenAlertModal(false);
   };
 
-  const handleUpdateProfile = () => {
-    setProfileState(tempProfile);
-    handleCloseEditModal();
-    handleOpenAlertModal();
+  const handleUpdateProfile = async () => {
+    try {
+      // Kirim data update dari form (tempProfile)
+      const response = await axios.put(`http://127.0.0.1:5000/api/pegawai/${userId}`, {
+        name: tempProfile.name,
+        phone_number: tempProfile.phone_number,
+        password: tempProfile.password
+      });
+  
+      // Gunakan data dari response
+      const updatedProfile = response.data.data;
+  
+      // Update profil dengan data dari response
+      setProfile(updatedProfile);
+      setProfileData(updatedProfile);
+      
+      // Update localStorage
+      localStorage.setItem('profile', JSON.stringify(updatedProfile));
+  
+      // Tutup modal dan tampilkan alert
+      handleCloseEditModal();
+      setOpenAlertModal(true);
+    } catch (error) {
+      console.error('Error updating profile:', error);
+      alert('Gagal memperbarui profil. Silakan coba lagi.');
+    }
   };
 
   const logout = () => {
     googleLogout();
-    localStorage.removeItem('profile');
+    localStorage.clear();
     navigate('/');
   };
 
-  if (!profile) {
+
+  if (!profileData) {
     return (
-      <Typography variant="h5" align="center" sx={{ mt: 4 }}>
-        Tidak ada profil ditemukan. Silakan login.
-      </Typography>
+      <React.Fragment>
+        <Typography variant="h5" align="center" sx={{ mt: 4 }}>
+          Tidak ada profil ditemukan. Silakan login.
+        </Typography>
+      </React.Fragment>
     );
   }
 
@@ -193,57 +243,89 @@ function CreateAdmin() {
           </Box>
 
           <Box sx={{ bgcolor: 'white', p: 6, borderRadius: '4px', flex: 14, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
-            <AccountDetails profile={profileState} handleOpenEditModal={handleOpenEditModal} />
+            <AccountDetails profile={profileData} handleOpenEditModal={handleOpenEditModal} />
           </Box>
         </Box>
 
         {/* Edit Profile Modal */}
         <Modal open={openEditModal} onClose={handleCloseEditModal}>
-          <Box sx={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', width: 500, bgcolor: 'background.paper', p: 4, borderRadius: 5 }}>
-            <Typography variant="h5" sx={{ mb: 2, fontWeight: 'bold' }}>
-              Edit Profile
-            </Typography>
+        <Box sx={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', width: 500, bgcolor: 'background.paper', p: 4, borderRadius: 5 }}>
+          <Typography variant="h5" sx={{ mb: 2, fontWeight: 'bold' }}>
+            Edit Profile
+          </Typography>
 
-            {/* Daftar atribut yang dapat diedit */}
-            {[{ label: "NAME", value: profileState.name || 'ADMIN', isEditable: true },
-              { label: "NIK", value: "45312342" },
-              { label: "BORN DATE", value: "12 August 1987" },
-              { label: "DEPARTMENT", value: "ADMIN" },
-              { label: "PHONE", value: profileState.phone || '087251742212', isEditable: true },
-              { label: "PERIOD", value: "AVAILABLE", color: 'green', underline: true }
-            ].map((item, index) => (
-              <Box key={index} sx={{ display: 'flex', mb: 4, alignItems: 'center' }}>
-                <Typography variant="h6" sx={{ fontWeight: 'bold', color: 'black', minWidth: '200px' }}>
-                  {item.label}
+          {[
+            { 
+              label: "NAME", 
+              key: "name", 
+              value: profileData.name, 
+              isEditable: true 
+            },
+            { 
+              label: "NIK", 
+              key: "nik", 
+              value: profileData.nik 
+            },
+            { 
+              label: "BORN DATE", 
+              key: "born_date", 
+              value: profileData.born_date 
+            },
+            { 
+              label: "DEPARTMENT", 
+              key: "department", 
+              value: profileData.department 
+            },
+            { 
+              label: "PHONE", 
+              key: "phone_number", 
+              value: profileData.phone_number, 
+              isEditable: true 
+            },
+            { 
+              label: "Password", 
+              key: "password", 
+              value: profileData.password, 
+              isEditable: true 
+            },
+          ].map((item, index) => (
+            <Box key={index} sx={{ display: 'flex', mb: 4, alignItems: 'center' }}>
+              <Typography variant="h6" sx={{ fontWeight: 'bold', color: 'black', minWidth: '200px' }}>
+                {item.label}
+              </Typography>
+              <Typography variant="h6" sx={{ fontWeight: 'bold', mr: 1 }}>
+                :
+              </Typography>
+              {item.isEditable ? (
+                <TextField
+                  variant="outlined"
+                  value={tempProfile[item.key] || ''} // Use value from tempProfile
+                  onChange={(e) => setTempProfile(prev => ({ 
+                    ...prev, 
+                    [item.key]: e.target.value 
+                  }))}
+                  fullWidth
+                />
+              ) : (
+                <Typography variant="h6" sx={{ fontWeight: 'bold' }}>
+                  {item.value}
                 </Typography>
-                <Typography variant="h6" sx={{ fontWeight: 'bold', mr: 1 }}>
-                  :
-                </Typography>
-                {item.isEditable ? (
-                  <TextField
-                    variant="outlined"
-                    value={tempProfile[item.label.toLowerCase()]} // Ganti dengan tempProfile
-                    onChange={(e) => setTempProfile({ ...tempProfile, [item.label.toLowerCase()]: e.target.value })} // Update tempProfile
-                    fullWidth
-                  />
-                ) : (
-                  <Typography variant="h6">
-                    {item.value}
-                  </Typography>
-                )}
-              </Box>
-            ))}
-
-            <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
-              <Button variant="contained" color="primary" onClick={handleUpdateProfile}>
-                Update
-              </Button>
-              <Button variant="outlined" onClick={handleCloseEditModal} sx={{ ml: 2 }}>
-                Cancel
-              </Button>
+              )}
             </Box>
+          ))}
+
+          <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
+            <Button variant="contained" color="primary" onClick={handleUpdateProfile}>
+              Update
+            </Button>
+            <Button variant="outlined" onClick={handleCloseEditModal} sx={{ ml: 2 }}>
+              Cancel
+            </Button>
           </Box>
-        </Modal>
+        </Box>
+      </Modal>
+
+
 
         {/* Alert Modal for Profile Update */}
         <Modal open={openAlertModal} onClose={handleCloseAlertModal}>
